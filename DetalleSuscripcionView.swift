@@ -39,6 +39,8 @@ struct DetalleSuscripcionView: View {
 
                     DatoView(titulo: "Día de cobro", valor: "\(suscripcion.diaCobro) de cada mes")
 
+                    DatoView(titulo: "Próximo cobro", valor: viewModel.textoCobro(suscripcion))
+
                     DatoView(titulo: "Gasto al año", valor: viewModel.formatoDinero(viewModel.precioEnPesos(suscripcion, tipoCambio: tipoCambio) * 12) + " MXN")
                 }
                 .modifier(CardModifier())

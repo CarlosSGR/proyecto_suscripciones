@@ -4,9 +4,11 @@ import SwiftData
 struct AjustesView: View {
     @AppStorage("nombreUsuario") private var nombreUsuario = ""
     @AppStorage("tipoCambio") private var tipoCambio: Double = 18.5
+    @AppStorage("fechaTipoCambio") private var fechaTipoCambio = ""
     @AppStorage("diasAviso") private var diasAviso: Int = 3
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(DivisasViewModel.self) private var divisas
     @State private var viewModel = SuscripcionViewModel()
     @State private var showAlert = false
 
@@ -17,16 +19,53 @@ struct AjustesView: View {
                     TextField("Tu nombre", text: $nombreUsuario)
                 }
 
-                Section("Tipo de cambio (1 USD en MXN)") {
+                Section("Tipo de cambio") {
+                    HStack {
+                        Text("1 USD =")
+                        Spacer()
+                        Text(viewModel.formatoDinero(tipoCambio) + " MXN")
+                            .fontWeight(.bold)
+                    }
+
+                    if !fechaTipoCambio.isEmpty {
+                        Text("Actualizado el \(fechaTipoCambio)")
+                            .font(.caption)
+                            .foregroundColor(Color.secondary)
+                    }
+
+                    if divisas.cargando {
+                        ProgressView()
+                    } else {
+                        Button {
+                            Task {
+                                await divisas.obtenerTipoCambio()
+                                if let datos = divisas.tipoCambio {
+                                    tipoCambio = datos.rates.MXN
+                                    fechaTipoCambio = datos.date
+                                }
+                            }
+                        } label: {
+                            Label("Actualizar desde internet", systemImage: "arrow.clockwise")
+                        }
+                    }
+
+                    if !divisas.mensajeError.isEmpty {
+                        Text(divisas.mensajeError)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+                }
+
+                Section("Escribir tipo de cambio a mano") {
                     TextField("Tipo de cambio", value: $tipoCambio, format: .number)
                         .keyboardType(.decimalPad)
-                    Text("Se usa para convertir a pesos las suscripciones en dólares.")
-                        .font(.caption)
-                        .foregroundColor(Color.secondary)
                 }
 
                 Section("Avisos de cobro") {
                     Stepper("Avisarme \(diasAviso) días antes", value: $diasAviso, in: 1...10)
+                    Text("Las suscripciones que se cobren en ese plazo aparecen marcadas en Inicio.")
+                        .font(.caption)
+                        .foregroundColor(Color.secondary)
                 }
 
                 Section("Datos de prueba") {
@@ -48,4 +87,5 @@ struct AjustesView: View {
 
 #Preview {
     AjustesView()
+        .environment(DivisasViewModel())
 }

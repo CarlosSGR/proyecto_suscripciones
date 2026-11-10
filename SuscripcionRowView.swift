@@ -3,6 +3,7 @@ import SwiftUI
 struct SuscripcionRowView: View {
     var suscripcion: Suscripcion
     var viewModel: SuscripcionViewModel
+    @AppStorage("diasAviso") private var diasAviso: Int = 3
 
     var body: some View {
         HStack {
@@ -28,9 +29,10 @@ struct SuscripcionRowView: View {
                 Text(viewModel.formatoDinero(suscripcion.precio) + " " + suscripcion.moneda)
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                Text("Día \(suscripcion.diaCobro)")
+                Text(viewModel.textoCobro(suscripcion))
                     .font(.caption)
-                    .foregroundColor(Color.secondary)
+                    .fontWeight(viewModel.diasParaCobro(suscripcion) <= diasAviso ? .bold : .regular)
+                    .foregroundColor(viewModel.diasParaCobro(suscripcion) <= diasAviso ? Color.red : Color.secondary)
             }
         }
     }

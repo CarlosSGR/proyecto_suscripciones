@@ -102,6 +102,56 @@ import Observation
         return datos
     }
 
+    func diaDeHoy() -> Int {
+        return Calendar.current.component(.day, from: Date())
+    }
+
+    func diasDelMes() -> Int {
+        return Calendar.current.range(of: .day, in: .month, for: Date())?.count ?? 30
+    }
+
+    func diasParaCobro(_ suscripcion: Suscripcion) -> Int {
+        let hoy = diaDeHoy()
+        var dia = suscripcion.diaCobro
+        if dia > diasDelMes() {
+            dia = diasDelMes()
+        }
+        if dia >= hoy {
+            return dia - hoy
+        }
+        return diasDelMes() - hoy + dia
+    }
+
+    func textoCobro(_ suscripcion: Suscripcion) -> String {
+        let dias = diasParaCobro(suscripcion)
+        if dias == 0 {
+            return "Se cobra hoy"
+        }
+        if dias == 1 {
+            return "Se cobra mañana"
+        }
+        return "En \(dias) días"
+    }
+
+    func ordenadasPorCobro(_ suscripciones: [Suscripcion]) -> [Suscripcion] {
+        let hoy = diaDeHoy()
+        return suscripciones.filter { $0.diaCobro >= hoy } + suscripciones.filter { $0.diaCobro < hoy }
+    }
+
+    func proximas(_ suscripciones: [Suscripcion], diasAviso: Int) -> [Suscripcion] {
+        return ordenadasPorCobro(suscripciones).filter {
+            diasParaCobro($0) <= diasAviso
+        }
+    }
+
+    func mensajeAviso(_ proximas: [Suscripcion]) -> String {
+        var mensaje = ""
+        for suscripcion in proximas {
+            mensaje += "\(suscripcion.nombre): \(textoCobro(suscripcion))\n"
+        }
+        return mensaje
+    }
+
     func filtradas(from suscripciones: [Suscripcion]) -> [Suscripcion] {
         let search = searchText
             .trimmingCharacters(in: .whitespacesAndNewlines)

@@ -7,6 +7,10 @@ struct InicioView: View {
 
     @AppStorage("nombreUsuario") private var nombreUsuario = ""
     @AppStorage("tipoCambio") private var tipoCambio: Double = 18.5
+    @AppStorage("diasAviso") private var diasAviso: Int = 3
+
+    @State private var mostrarAviso = false
+    @State private var yaAvisado = false
 
     var body: some View {
         NavigationStack {
@@ -34,6 +38,29 @@ struct InicioView: View {
                     .background(LinearGradient(gradient: Gradient(colors: [Color(hex: "#5E5CE6"), Color(hex: "#BF5AF2")]), startPoint: .leading, endPoint: .trailing))
                     .cornerRadius(20)
 
+                    if !viewModel.proximas(suscripciones, diasAviso: diasAviso).isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label("Cobros en los próximos \(diasAviso) días", systemImage: "bell.badge.fill")
+                                .font(.headline)
+                                .foregroundColor(.white)
+
+                            ForEach(viewModel.proximas(suscripciones, diasAviso: diasAviso)) { suscripcion in
+                                HStack {
+                                    Text(suscripcion.nombre)
+                                        .fontWeight(.semibold)
+                                    Spacer()
+                                    Text(viewModel.textoCobro(suscripcion))
+                                }
+                                .font(.subheadline)
+                                .foregroundColor(.white)
+                            }
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(hex: "#FF9F0A"))
+                        .cornerRadius(20)
+                    }
+
                     Text("Próximos cobros")
                         .font(.title3)
                         .fontWeight(.bold)
@@ -43,7 +70,7 @@ struct InicioView: View {
                             .foregroundColor(Color.secondary)
                     }
 
-                    ForEach(suscripciones) { suscripcion in
+                    ForEach(viewModel.ordenadasPorCobro(suscripciones)) { suscripcion in
                         SuscripcionRowView(suscripcion: suscripcion, viewModel: viewModel)
                             .modifier(CardModifier())
                     }
@@ -51,6 +78,17 @@ struct InicioView: View {
                 .padding()
             }
             .navigationTitle("Mis Suscripciones")
+            .onAppear {
+                if !yaAvisado && !viewModel.proximas(suscripciones, diasAviso: diasAviso).isEmpty {
+                    mostrarAviso = true
+                    yaAvisado = true
+                }
+            }
+            .alert("Tienes cobros próximos", isPresented: $mostrarAviso) {
+                Button("OK") { }
+            } message: {
+                Text(viewModel.mensajeAviso(viewModel.proximas(suscripciones, diasAviso: diasAviso)))
+            }
         }
     }
 }

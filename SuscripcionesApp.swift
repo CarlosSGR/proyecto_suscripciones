@@ -3,6 +3,8 @@ import SwiftData
 
 @main
 struct SuscripcionesApp: App {
+    @State private var divisas = DivisasViewModel()
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Suscripcion.self,
@@ -19,6 +21,7 @@ struct SuscripcionesApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(divisas)
         }
         .modelContainer(sharedModelContainer)
     }
